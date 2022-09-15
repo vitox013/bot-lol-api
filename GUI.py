@@ -1,10 +1,7 @@
-from os import listdir
-import pyautogui
-import time
 import PySimpleGUI as sg
 import sys
 import webbrowser
-import pygetwindow
+
 
 url = 'https://github.com/vitox013'
 
@@ -37,19 +34,6 @@ def janelaChampions():
 
 
 # ======================= FUNCÕES GENERICAS =================================
-def removeSuffix(inputString, suffix):
-    if suffix and inputString.endswith(suffix):
-        return inputString[:-len(suffix)]
-    return inputString
-
-def loadImages(dirPath='./imgs/'):
-    fileNames = listdir(dirPath)
-    targets = {}
-
-    for file in fileNames:
-        path = 'imgs/' + file
-        targets[removeSuffix(file, '.png')] = path
-    return targets
 
 def eventListenerFecharJogo():
     global event
@@ -81,7 +65,6 @@ def choices():
 def windows():
     global imagens, janela3,janela1,escolhas,window,values,event
 
-    imagens = loadImages()
     janela3 = janelaInicial()
     window, event, values = sg.read_all_windows(timeout=5000)
     if event == sg.WINDOW_CLOSED:

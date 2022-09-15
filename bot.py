@@ -1,10 +1,7 @@
 import time
 import requests
-import urllib3
 from lcu_driver import Connector
 import GUI as GUI
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 connector = Connector()
 
@@ -55,6 +52,8 @@ async def waitingRoles(connection):
 @connector.ready
 async def startQueue(connection):
     await connection.request('post', '/lol-lobby/v2/lobby/matchmaking/search', data={})
+
+
 
 @connector.ws.register('/lol-matchmaking/v1/ready-check', event_types=('UPDATE',))
 async def checkStart(connection, event):
@@ -124,6 +123,7 @@ async def disconnect(connection):
     await connector.stop()
 
 connector.start()
+
 
 
 
