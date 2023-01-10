@@ -2,10 +2,14 @@ import time
 import requests
 from lcu_driver import Connector
 import GUI as GUI
+import urllib3
+import sys
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 connector = Connector()
 
 gameMode = GUI.choices()
+inGame = False
 ban = GUI.escolhas['ban']
 picks1 = [GUI.escolhas['opcao1'],GUI.escolhas['opcao2']]
 picks = [x.lower() for x in picks1]
@@ -37,7 +41,6 @@ async def inLobby(connection):
     except(Exception,):
         print('Já está no saguão')
 
-
 @connector.ready
 async def waitingRoles(connection):
     rolesReady = False
@@ -53,8 +56,6 @@ async def waitingRoles(connection):
 async def startQueue(connection):
     await connection.request('post', '/lol-lobby/v2/lobby/matchmaking/search', data={})
 
-
-
 @connector.ws.register('/lol-matchmaking/v1/ready-check', event_types=('UPDATE',))
 async def checkStart(connection, event):
     if event.data['state'] == 'InProgress' and event.data['playerResponse'] == 'None':
@@ -62,12 +63,13 @@ async def checkStart(connection, event):
 
 @connector.ws.register('/lol-champ-select/v1/session', event_types=('CREATE', 'UPDATE'))
 async def champSelect(connection,event):
+    global inGame
     i = 0
     j = 0
     banning = False
     picking = False
     prePicked = False
-    inGame = False
+    preSel = False
     phase = ''
     lobbyPhase = event.data['timer']['phase']
     localPlayerId = event.data['localPlayerCellId']
@@ -81,6 +83,13 @@ async def champSelect(connection,event):
             banning = actArray['isInProgress']
           elif phase == 'pick':
             picking = actArray['isInProgress']
+    if phase == 'pick' and lobbyPhase == "PLANNING" and not preSel:
+      while not preSel:
+        try:
+          await connection.request('patch', '/lol-champ-select/v1/session/actions/%d' % actId, data={"championId":championsMap[picks[0]], "completed": True})
+          preSel = True
+        except(Exception,):
+          print('Tentando pré selecionar')
     if phase == 'ban' and lobbyPhase == 'BAN_PICK' and banning:
       while banning:
         try:
@@ -111,7 +120,9 @@ async def champSelect(connection,event):
           requestGameData = requests.get('https://127.0.0.1:2999/liveclientdata/allgamedata', verify=False)
           gameData = requestGameData.json()['gameData']['gameTime']
           if gameData > 0 and not inGame:
+            print('Entrei no if')
             inGame = True
+            sys.exit()
           time.sleep(2)
         except (Exception,):
             print('Waiting for game to start...')
